@@ -1,0 +1,9 @@
+node_modules/
+*.log
+
+# 发布辅助内容：留在本地供发布时使用，不推送到公开仓库。
+# docs/ 是发布流程文档（含本机路径），scripts/ 是同步与推送脚本，*.cmd 是一键入口。
+# 注意：CHANGELOG.md、README.md、LICENSE、package.json、cordis.patch.yml、lib/ 都要推送。
+docs/
+scripts/
+*.cmd
