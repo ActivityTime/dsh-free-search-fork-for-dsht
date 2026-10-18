@@ -4,6 +4,9 @@
   "description": "DSHT（DeepSeek Harness Tavern）适配版 · dsh-free-search 独立 fork。免费联网搜索：24 个引擎（Bing/DuckDuckGo/AnySearch/SearXNG/Exa/Tavily/Keenable/Firecrawl/Parallel 免 key；Zhihu global/site 走 MCP；Perplexity/SerpBase/DeepSeek/You.com/Baidu/Kimi/Aliyun/Doubao 带 key；OpenAI/Gemini/Claude 模型内置搜索，仅显式调用）+ 自动智能路由 + 引擎全局启停与回退优先级 + 可编辑中英文分池 + multi 模式（并行全语言池合并）+ multi_search 跨源工具 + 失败感知回退（quota/auth 冷却、transient 重试、fallbackOn）+ 时间过滤 + 平台搜索 + 域名黑名单（blockedDomains）+ web_fetch，带联网设置页。不再追踪上游 DDDMUC/dsh-free-search。",
   "type": "module",
   "main": "lib/index.js",
+  "scripts": {
+    "check": "node scripts/check-consistency.mjs"
+  },
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
@@ -103,7 +106,7 @@
   },
   "dsh": {
     "bundle": {
-      "patch": "cordis.patch.yml"
+      "patch": "./cordis.patch.yml"
     },
     "client": {
       "inject": [
