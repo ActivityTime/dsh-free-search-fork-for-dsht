@@ -82,7 +82,12 @@
 
 ## 安装（DSH-Tavern）
 
-DSH-Tavern 社区的插件安装以「**放进数据目录的 `plugins/` 文件夹、完全重启**」为主流（官方讨论区里 Knock Knock #233 即为这种写法：『把文件夹放进 Tavern 数据目录的 plugins 里，完全重启 DSH』）。本插件也支持该方式。它**带 node 依赖**，纯文件夹投放需要手动装依赖这一步；而**默认配置已烘焙进插件 schema 默认值**，无论文件夹投放还是 `dsh plugin add` 都会拿到同一套开箱即用的 26 字段调优（详见「开箱即用」）。因此本 README 把能自动装依赖的 `dsh plugin add` 列为推荐，文件夹投放列为社区通用写法。
+DSH-Tavern 的插件安装有两套都受框架支持的方式，按 DeepSeek Harness 官方文档（bundle plugin / repository plugin）与 DSHT 实际实现分为：
+
+- **① 标准方式 `dsh plugin add`**（官方文档定义的 **bundle plugin** 安装法）：底层转发 pnpm，**自动装好 node 依赖**、并把插件 `cordis.patch.yml` 注册为配置层，安装后重启 DSH 生效；
+- **② 文件夹扫描投放**（DSHT fork 在 `tavern-plugin/lib/domain/user-plugins.js` 实现的 `scanUserPlugins`）：把文件夹放进 `<data>/plugins/` 即自动注册——社区讨论区 #233 Knock Knock 用的就是它。但此路径**不调 pnpm、不挂 seed**，本插件需手动 `pnpm install` 依赖一次。
+
+两种方式**默认配置都生效、无例外**（见「开箱即用」）。因文件夹投放需手动装依赖，本 README 把能自动装依赖的 `dsh plugin add` 列为推荐。
 
 ### 方式一（推荐，开箱即用）：`dsh plugin add`
 
@@ -92,8 +97,11 @@ DSH-Tavern 社区的插件安装以「**放进数据目录的 `plugins/` 文件�
 # 从 GitHub 安装（推荐，依赖自动安装）
 dsh plugin --profile tavern add github:ActivityTime/dsh-free-search-fork-for-dsht
 
-# 从本地源码目录安装（link 模式，需先在目录里 pnpm install 一次）
-dsh plugin --profile tavern add ./dsh-free-search-fork-for-dsht
+# 从本地绝对路径安装（file: 形式，依赖同样自动安装）
+dsh plugin --profile tavern add file:/绝对路径/dsh-free-search-fork-for-dsht
+
+# 本地开发符号链接（link: 形式，不复制、需手动 pnpm install 一次）
+dsh plugin --profile tavern add link:/绝对路径/dsh-free-search-fork-for-dsht
 
 # 从 Release tarball 安装（离线 / 网络受限）
 dsh plugin --profile tavern add /path/to/dsh-free-search-fork-for-dsht-0.x.x.tgz
@@ -103,8 +111,7 @@ dsh plugin --profile tavern add /path/to/dsh-free-search-fork-for-dsht-0.x.x.tgz
 - 包声明了 `dsh.bundle`，安装器把内置 `cordis.patch.yml`（26 字段调优种子）注册为配置层直接生效——**即开箱即用，无需手改任何 patch**；
 - 安装后**完全重启 DSH**（桌面版退出重进）即生效；web 端可 `Ctrl+F5` 刷新一次。
 
-> 本地目录（`./`）走 link 模式、pnpm 不自动带依赖，需先在目录里 `pnpm install` 一次（社区 `dsh-plugin-reasoning-efforts` 同款说明）。`github:` / `.tgz` 无需此步。
-> ⚠ `github:` 形式要求本仓库已推送到 GitHub 且公开可读；尚未推送时请用本地 `./` 路径或先推送。
+> `file:` 与 `github:` / `.tgz` 同为 pnpm 标准源，**自动装好依赖**；只有 `link:` 开发符号链接模式不复制文件、需先在插件目录 `pnpm install` 一次。`github:` 形式要求本仓库已推送到 GitHub 且公开可读；尚未推送时请用 `file:` / `link:` 本地路径或先推送。
 
 验证（无需启动宿主）：
 
