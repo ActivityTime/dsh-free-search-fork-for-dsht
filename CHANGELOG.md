@@ -5,6 +5,36 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-19（web_fetch 兜底工具注册）
+
+### 修复
+
+- **DSHT 下 `web_fetch` 工具不存在**：DSH 0.2 的 `web_fetch` 由核心按 preset 的
+  `tool-web: { fetch }` 决定是否注册（`dsh-tool-web/lib/index.js`：`if (resolved.fetch) applyWebFetchTool(...)`），
+  而 DSHT 两个 preset（`preset-tavern` / `preset-tavern-background`）均为 `fetch: false`，
+  且 0.2.0-rc.2 起 tool-web 行从 host 平面挪进 preset 声明（host 平面恢复会同 preset 行冲突，
+  旧版靠 profile patch `- id: tool-web {fetch:true}` 打开的路已不成立）→ 核心的 web_fetch
+  在 DSHT 里根本不注册。本插件提示词一直在教模型调用 web_fetch、fetchProvider 接管
+  （`fs-quality-fetch`）也已就位，唯独缺工具壳。
+  - 核心未注册时，插件**按名注册同名兜底工具**（`lib/index.js`，multi_search 注册块后）：
+    `ctx.inject(["tools","web"])` + `sctx.tools.get("web_fetch")` 检测，`fetch:true` 环境
+    （标准 DSH）跳过，不双注册；
+  - schema / execute 与核心 `applyWebFetchTool`（dsh-tool-web:730-818）**逐行同构**：
+    execute 只调 `ctx.web.fetch` 官方 seam，抓取逻辑零重写，实际执行者为当前 fetchProvider
+    （默认 `fs-quality-fetch` 质量链 direct → 无头浏览器 → exa → firecrawl → crawl4ai）；
+  - render 走本插件既有 `<untrusted-web-content>` 安全边界（防提示注入）；
+  - `timeoutMs: 120000`（核心 30s；本插件质量链内部预算 60s/120s，工具预算须不小于链预算）；
+  - **同名使现有门禁自动接管**：`search_switch.js` 的 `WEB_FETCH_TOOL` 在设置页「网页抓取工具」
+    开关关闭时 assembly 层按名移除 + 执行层按名否决，无需第二套逻辑；
+  - 上游 dsh-free-search 0.9.5 亦不自注册 web_fetch（假设标准 DSH `fetch:true`）——此为
+    fork 相对上游的差异，README §2 已记。
+
+### 变更
+
+- 版本号 `0.9.1-local.2` → `0.9.1-local.3`。
+- README §2「web_fetch 只做开关管控，零重写」与 Q&A「DSHT 的 web_fetch 去哪了」更正为
+  描述兜底注册机制；`lib/index.js` 中引用旧 profile patch 机制的过期注释同步更新。
+
 ## 2026-10-19（web_search / web_fetch 接管适配 DSH 0.2）
 
 ### 修复
