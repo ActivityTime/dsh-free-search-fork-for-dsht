@@ -5,6 +5,28 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-19（web_search / web_fetch 接管适配 DSH 0.2）
+
+### 修复
+
+- **接管逻辑适配 DSH 0.2.1-rc.2 的 provider 选择机制**（对齐上游 dsh-free-search 0.9.5）：
+  DSH 0.2 起 `ctx.web` 的 provider 选择收进 config 的 volatile ref
+  （`config.searchProvider` / `config.fetchProvider`），**只能通过 `settings.mutate` 写入**；
+  0.1.x 的 `searchProviderId` / `fetchProviderId` 运行时属性已删除。原实现写死属性 →
+  无人读取 → 日志谎报 "taking over" 但搜索/抓取实际仍走官方 `deepseek-official` / `http`。
+  - `providerSelection` 双形态探测：`web.config[key]` 为带 `.get()` 的 ref 时走 rc.2+ 路径，否则回落旧属性；
+  - 接管写入合并为**一次** `settings.mutate("web", ops)`（同 tick 两次 mutate 第二次会被设置文档版本号顶掉），
+    且置于 `ctx.inject(["settings"])` 内——apply 期间 settings 未挂载，直接读 ref 永远拿不到；
+  - `registerOnce` 幂等注册（吞 `WEB_DUPLICATE_PROVIDER` 复用）+ `appliedContexts` 防同 ctx 重入；
+  - `settings/document-updated` 监听 `web` ns 记诊断日志（provider 写入会重建 web 服务并令插件重新 apply）。
+- **不动 bundle patch**：静态 `- id: web` 行在插件被禁用/跳过时会留下悬空引用
+  （上游 issue #51：`configured web provider "ddg" is not registered` → 所有 web 搜索全挂），
+  运行时接管可优雅降级。
+
+### 变更
+
+- 版本号 `0.9.1-local.1` → `0.9.1-local.2`。
+
 ## 2026-10-19（发布合规修正）
 
 ### 修复
