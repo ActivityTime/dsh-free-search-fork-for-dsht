@@ -125,9 +125,23 @@ dsh --profile tavern --dump-config   # 应出现 "# == dsh-free-search-fork-for-
 dsh plugin --profile tavern remove dsh-free-search-fork-for-dsht
 ```
 
-### 方式二（社区通用写法）：`<data>/plugins/` 文件夹投放
+### 方式二（DSHT 官方标准，Tavern 插件）：`<data>/plugins/` 文件夹投放
 
-把插件文件夹直接放进 Tavern 数据目录的 `plugins/` 下、**完全重启 DSH** 即可——DSH 会自动扫描、注册并写 patch 条目（见 `tavern-plugin/lib/domain/user-plugins.js`）。这正是社区插件 Knock Knock（讨论区 #233）的安装方式。
+> ✅ **方式一与方式二都是官方标准，各管一类东西**：DSHT 官方文档（#m07）对「Tavern 插件」
+> 给的就是本方式——「把插件文件夹放进 `~/.dsh/profile-data/tavern/data/plugins/`，**不用重启**；
+> 刷新页面后界面部分出现」；`dsh plugin add` 则是「其他 DSH 扩展」按自身要求安装的那条路。
+>
+> 本插件是 Tavern 酒馆向插件 → **走方式二**。
+>
+> 三条实操注意：
+> - **此路径不调 pnpm**：`dependencies` 必须先在插件目录 `pnpm install` 装好，否则 `MODULE_NOT_FOUND`。
+> - **放真实目录**（复制或真符号链接均可），**不要用 Windows junction**——Node `readdir` 对 junction 返回
+>   `isDirectory()=false`，而 `scanUserPlugins`（`user-plugins.js:68`）正是按该标志过滤，扫不到。
+> - 若改用方式一：**不要手工改 `profiles/<profile>/package.json` 的 dependencies/bundles**
+>   （`dsh plugin add` 的内部产物，会被 profile 重写覆盖），也**不要手工往 `node_modules/` 塞 junction**
+>   （且中文路径下 `pnpm install` 会静默跳过 `link:` 依赖）。
+
+把插件文件夹直接放进 Tavern 数据目录的 `plugins/` 下即可——DSH 会自动扫描、注册并写 patch 条目（见 `tavern-plugin/lib/domain/user-plugins.js`），桌面端 watcher 实时同步，**不必重启**，刷新页面即生效。这正是社区插件 Knock Knock（讨论区 #233）的安装方式。
 
 桌面版路径：读 `launcher-settings.xml` 的 `<DataDirectory>`，放到
 `<DataDirectory>/harness/profile-data/tavern/data/plugins/dsh-free-search-fork-for-dsht/`。

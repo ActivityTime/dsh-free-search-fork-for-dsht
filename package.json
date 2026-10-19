@@ -1,7 +1,7 @@
 {
   "name": "dsh-free-search-fork-for-dsht",
-  "version": "0.9.1",
-  "description": "DSHT（DeepSeek Harness Tavern）适配版 · dsh-free-search 独立 fork。免费联网搜索：24 个引擎（Bing/DuckDuckGo/AnySearch/SearXNG/Exa/Tavily/Keenable/Firecrawl/Parallel 免 key；Zhihu global/site 走 MCP；Perplexity/SerpBase/DeepSeek/You.com/Baidu/Kimi/Aliyun/Doubao 带 key；OpenAI/Gemini/Claude 模型内置搜索，仅显式调用）+ 自动智能路由 + 引擎全局启停与回退优先级 + 可编辑中英文分池 + multi 模式（并行全语言池合并）+ multi_search 跨源工具 + 失败感知回退（quota/auth 冷却、transient 重试、fallbackOn）+ 时间过滤 + 平台搜索 + 域名黑名单（blockedDomains）+ web_fetch，带联网设置页。不再追踪上游 DDDMUC/dsh-free-search。",
+  "version": "0.9.1-local.1",
+  "description": "Local independent fork of dsh-free-search. Free web search for DeepSeek Harness: 24 engines (Bing/DuckDuckGo/AnySearch/SearXNG/Exa/Tavily/Keenable/Firecrawl/Parallel keyless; Zhihu global/site via MCP and Perplexity/SerpBase/DeepSeek/You.com/Baidu/Kimi/Aliyun/Doubao with key; OpenAI/Gemini/Claude model built-in search, explicit-only) + auto smart routing + global engine enable/disable & fallback priority + editable zh/en language pools + multi mode (parallel full language-pool merge) + multi_search cross-source tool + failure-aware fallback (quota/auth cooldown, transient retry, fallbackOn) + time filtering + platform search + domain blocklist (blockedDomains) + web_fetch, with web settings UI.",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
@@ -13,17 +13,30 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/mcp_adapter.js",
+    "lib/research.js",
+    "lib/rerank.js",
+    "lib/cache.js",
+    "lib/vertical.js",
+    "lib/fetch_provider.js",
+    "lib/fetch_upstream.js",
+    "lib/weather.js",
+    "lib/domain_filter.js",
+    "lib/url_norm.js",
+    "lib/multi_policy.js",
+    "lib/search_switch.js",
+    "lib/paths.js",
+    "lib/proxy.js",
     "cordis.patch.yml",
-    "LICENSE",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "keywords": [
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
-    "dsht",
-    "dsh-tavern",
     "web-search",
     "duckduckgo",
     "bing",
@@ -65,11 +78,12 @@
     "@deepseek-ai/dsh-client-ui-commands": "^0.1.5-rc.1 || ^0.2.0-rc.1",
     "@deepseek-ai/dsh-client-ui-plugin-manager": "^0.1.5-rc.1 || ^0.2.0-rc.1",
     "@deepseek-ai/dsh-client-ui-renderer": "^0.1.5-rc.1 || ^0.2.0-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.5-rc.1 || ^0.2.0-rc.1",
     "@deepseek-ai/dsh-settings": "^0.1.5-rc.1 || ^0.2.0-rc.1",
     "@deepseek-ai/dsh-tools": "^0.1.5-rc.1 || ^0.2.0-rc.1",
     "@deepseek-ai/schemastery": "^3.18.4",
     "react": "^18.2.0",
-    "dsh-better-sidebar": "0.19.1"
+    "dsh-better-sidebar": ">=0.19.1"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {
@@ -82,6 +96,9 @@
       "optional": true
     },
     "@deepseek-ai/dsh-client-ui-renderer": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-ui-slots": {
       "optional": true
     },
     "@deepseek-ai/dsh-settings": {
@@ -101,8 +118,16 @@
     }
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-settings": "^0.1.5-rc.1 || ^0.1.7-rc.1",
-    "@deepseek-ai/dsh-tools": "^0.1.5-rc.1 || ^0.1.7-rc.1"
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-ui-commands": "^0.2.0-rc.1",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "^0.2.0-rc.1",
+    "@deepseek-ai/dsh-client-ui-renderer": "^0.2.0-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.0-rc.1",
+    "@deepseek-ai/dsh-settings": "^0.2.0-rc.1",
+    "@deepseek-ai/dsh-tools": "^0.2.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.5",
+    "dsh-better-sidebar": "^0.28.0",
+    "react": "^18.2.0"
   },
   "dsh": {
     "bundle": {
@@ -123,7 +148,9 @@
       "dshReleases": {
         "0.1.5-rc.1": "compatible",
         "0.1.5-rc.2": "compatible",
-        "0.1.7-rc.1": "compatible"
+        "0.1.7-rc.1": "compatible",
+        "0.2.0-rc.1": "compatible",
+        "0.2.1-rc.2": "compatible"
       }
     }
   }

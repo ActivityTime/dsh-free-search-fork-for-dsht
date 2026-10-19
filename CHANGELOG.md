@@ -5,6 +5,30 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-19（发布合规修正）
+
+### 修复
+
+- **`files` 补两个被实际 import 的模块** `lib/paths.js`、`lib/proxy.js`
+  （`cache.js`、`fetch_provider.js`、`fetch_upstream.js` 均 import）。此前白名单漏列，
+  发到 npm 会直接 `MODULE_NOT_FOUND`。另补入 `README.md`、`LICENSE`。
+- **`peerDependencies` 补 `@deepseek-ai/dsh-client-ui-slots`** —— 它在 `dsh.client.inject`
+  中声明却未进 peer，属漏声明。
+- **`dsh-better-sidebar` peer 由写死的 `0.19.1` 放宽为 `>=0.19.1`** —— 写死旧版会在装
+  0.28.x 的 DSHT 上判定版本不兼容。
+- **`dsh.compatibility.dshReleases` 补 DSH 0.2**：`0.2.0-rc.1`、`0.2.1-rc.2`（原先只列到 0.1.7-rc.1）。
+
+### 新增
+
+- **`devDependencies` 全量补齐**，覆盖全部 10 个 peer（官方规范要求 dsh 包 peer+dev 双声明），
+  dev 版本对齐 runtime 0.2.1-rc.2。
+
+### 文档
+
+- README 安装章节改为准确表述：`dsh plugin add` 与 `data/plugins/` 投放**都是官方标准**，
+  前者用于其他 DSH 扩展、后者用于 Tavern 插件；并补 junction 不可用、中文路径下
+  `pnpm install` 会静默跳过 `link:` 依赖等实操注意。
+
 ## 2026-10-18 · DSHT 适配版首发（v0.9.1）
 
 ### 适配声明
