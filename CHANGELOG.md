@@ -5,6 +5,28 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-24（v0.9.2：对齐官方「本局前台工具」逐工具开关）
+
+### 修复
+
+- **搜索工具与官方 web_search 的前台可见性对不上**：DSHT 新版给「本局设置 → 高级 →
+  前台工具」加了逐工具开关（chat header 的 `disabledForegroundTools`），官方 web_search
+  由 `visibleTools`（turn-orchestration.js）按它过滤，而插件工具官方明确不管、对齐责任
+  在插件——旧版 `search_switch.js` 只复刻了 `webSearchEnabled`/`mode` 两个字段，导致
+  面板里关掉 web_search（或关掉「插件/扩展」条目）后 `advanced_search` 等 9 个工具
+  照常注入。
+- 现在 `search_switch.js`（v2.1）同读 `disabledForegroundTools`（journal / block-DAG
+  两种存储格式），门禁判定升级为 `{allowed, disabled}`：
+  - 主开关关，或本局前台工具关掉 `web_search` → 全体受控工具 + `web_fetch` 与官方
+    web_search 同刻消失（延续「同一把开关」语义）；
+  - 否则按面板逐工具条目移除（`web_fetch` 自己的条目同样生效）；
+  - card 模式与官方一致，不受逐工具开关约束；
+  - 执行层 `tools.guard` 对应否决并给出可操作原因；latch 与缓存前缀稳定性不变量保留。
+
+### 变更
+
+- 版本号正式化：`0.9.1-local.3` → **`0.9.2`**（package.json 与 `PLUGIN_VERSION` 同步）。
+
 ## 2026-10-19（web_fetch 兜底工具注册）
 
 ### 修复
