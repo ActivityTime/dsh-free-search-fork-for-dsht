@@ -5,6 +5,25 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-26（v0.9.3：稳定接管核心 web_search，覆盖官方内置 tavern-search）
+
+### 变更
+
+- **问题**：DSHT 3.1.0 官方 `installWebAccess` 会在启动期把 `searchProvider` 异步写成内置
+  `tavern-search`（bing/ddg/searxng），与本插件的接管 mutate 竞争加载顺序；旧版只在
+  "空 / `deepseek-official`" 时接管，官方先写就会把 web_search 留在官方免费源，不走本插件
+  多引擎链。
+- **A 白名单接管**：接管白名单由 `{deepseek-official}` 扩为 `{deepseek-official, tavern-search}`，
+  出厂默认与官方内置都接管到本插件；**用户显式选择的第三方付费 provider 永不抢占**。
+  写 `web.searchProvider` 会触发 web 重建、插件重入，重入再判形成单向收敛，无振荡。
+- **B 启动一次性校正**：启动窗口（2500ms）末尾复查一次，若仍落在白名单/为空则改回本 provider；
+  只跑一次，运行中手动切换（含手动切回内置、选第三方）一律尊重、不再干预；异常只 warn 不阻断。
+- 版本号 `0.9.2` → `0.9.3`（package.json / PLUGIN_VERSION 三处同步）。
+
+### 校验
+
+- `npm run check`：32 PASS / 0 FAIL；改动 JS 通过 `node --check`。
+
 ## 2026-10-24（v0.9.2：对齐官方「本局前台工具」逐工具开关）
 
 ### 修复

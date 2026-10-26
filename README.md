@@ -80,6 +80,13 @@
 - npm 版本检查指向本 fork 自有包名 `dsh-free-search-fork-for-dsht`（`lib/index.js` 的 `NPM_REGISTRY_URL`），**不会误报上游更新**；
 - GitHub 仓库独立维护，不再合并 DDDMUC/dsh-free-search 的上游 PR。
 
+### 8. 稳定接管核心 web_search 的后端
+
+本插件不另建搜索工具，而是注册聚合搜索 provider 并把核心 `web_search` 的后端路由到本插件的多引擎免费链。针对 DSHT 3.1.0 官方内置免费源（`tavern-search`）与本插件启动期的写入竞争，做了两层保证：
+
+- **白名单接管**：出厂默认 `deepseek-official` 与官方内置 `tavern-search` 都被接管到本插件；用户在设置里**显式选择的第三方付费源永不抢占**；
+- **启动一次性校正**：启动窗口末尾复查一次，若被官方异步写成内置源则改回，运行中手动切换一律尊重、不再干预。
+
 ---
 
 ## 安装（DSH-Tavern）
