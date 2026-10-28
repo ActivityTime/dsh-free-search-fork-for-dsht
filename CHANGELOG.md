@@ -5,6 +5,28 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-10-29（v0.9.4：修复 web_fetch 质量链无超时导致的无限挂起）
+
+### 修复
+
+- **web_fetch 对无法返回的站点会无限挂起**（实测 10 分钟不返回、会话卡死）：根因是 DSH
+  工具超时为协作式（deadline 只 abort signal，execute 不响应 abort 就永不返回），且质量链
+  T1 代理隧道黑洞时 20s idle timeout 实测不触发、质量链无全局总超时、T3/T4 未传 signal。
+- 三层兜底：fork `web_fetch` execute 包 `Promise.race` **90s 强制超时**（模型必收超时错误）；
+  质量链 `fetch` 顶层加 **90s 总兜底**；`httpsGetFollow` 加 **25s 硬超时**（黑洞 / br body
+  挂起强制失败）。
+- T3/T4（Firecrawl / Crawl4ai）补传 `signal`，有 key 时也能响应中止。
+- **research 宿主链兜底**（随 7f14c8d）：`platformFetch` 落回宿主 `ctx.web.fetch`
+  时补 20s 硬超时（AbortSignal.any），修复代理抓取失败落回宿主后无限挂起导致
+  research 长时间不返回。
+- 版本号 `0.9.3` → `0.9.4`（package.json / PLUGIN_VERSION 三处同步）。
+
+### 校验
+
+- `npm run check`：32 PASS / 0 FAIL；改动 JS 通过 `node --check`。
+- 复刻 DSHT 环境实测：moegirl 正常路径 6s 返回 200；黑洞地址 `192.0.2.1` 实测 61.8s
+  强制 settle（< 90s 兜底），错误清晰返回，不再无限等待。
+
 ## 2026-10-26（v0.9.3：稳定接管核心 web_search，覆盖官方内置 tavern-search）
 
 ### 变更
