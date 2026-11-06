@@ -87,6 +87,22 @@
 - **白名单接管**：出厂默认 `deepseek-official` 与官方内置 `tavern-search` 都被接管到本插件；用户在设置里**显式选择的第三方付费源永不抢占**；
 - **启动一次性校正**：启动窗口末尾复查一次，若被官方异步写成内置源则改回，运行中手动切换一律尊重、不再干预。
 
+### 9. 工具开关下沉到注册层（面板列表也一起消失）
+
+「设置页 → 工具开关」此前只管请求与调用：assembly 阶段移除 + 执行层 guard 否决。但 DSHT「本局设置 → 高级 → 前台工具」的清单在**本局还没有请求缓存**时，会回落到宿主注册表 `ctx.tools.schemas()`（tavern 的 `extraTools` / `recordTools` 逻辑），于是**开关关着的工具照样列在面板里**。
+
+官方 `register(definition, { when })` 的条件工具救不了这一层——`definitions()` / `schemas()` 不带 `toolSet` 时**只读注册定义、不求值 `when`**。
+
+本 fork 因此把门禁再下沉一层（`lib/tool_gate.js`）：
+
+- 开关 **ON** → 注册（行为与之前完全一致）；
+- 开关 **OFF** → **不注册**：注册表里没有它，面板回落路径、宿主工具目录、assembly、执行层同时看不到；
+- 设置页保存后 `syncToolRegistrations()` 立即对齐（开→注册 / 关→注销），无需重启；
+- 读取异常一律按「开启」处理（fail-open，与 `search_switch` 的 `disabledTools` 口径一致）；
+- `web_fetch` 不进这一层：它是官方工具名，仍在静态前台工具目录里，继续由 `search_switch` 的 assembly + guard 管。
+
+已知边界：**已发过轮的旧局**，面板读的是上一轮真实请求的缓存（`foregroundExtraTools`），插件侧改完要等下一轮请求才刷新；新建局 / 重启后立即生效。
+
 ---
 
 ## 安装（DSH-Tavern）

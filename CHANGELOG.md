@@ -5,6 +5,49 @@
 > **关于版本号**：本仓库为 `dsh-free-search` 的 **DSHT（DeepSeek Harness Tavern）适配 fork**，
 > 不再追踪上游 DDDMUC/dsh-free-search，故版本号独立演进，与上游无对应关系。
 
+## 2026-11-07（v0.9.5：工具开关下沉到注册层，未开启的工具从面板列表消失）
+
+### 修复
+
+- **工具开关关掉后，工具仍出现在 DSHT「本局设置 → 高级 → 前台工具」列表里**。
+  原因：原有两道闸（`system-prompt/assemble` 移除 + `ctx.tools.guard` 否决）只作用于
+  **请求与调用**，从不改变**注册**；而该面板在「本局还没有请求缓存」时会回落到
+  `ctx.tools.schemas()`（宿主注册表全量），于是新局/重启后关着的工具又被列出来。
+- **官方条件工具 `register(def, { when })` 救不了这一层**：`dsh-tools` 的
+  `definitions()` / `schemas()` 在不带 `toolSet` 时只读注册定义、不求值 `when`
+  （README「Conditional tools」），面板调的正是无参 `schemas()`。
+- 解法：新增 **`lib/tool_gate.js`**，把门禁再下沉一层——开关 **OFF 就完全不注册**：
+  注册表里没有 → `schemas()` 里没有 → 面板回落路径也没有。9 个工具注册点全部改为
+  `registerGatedTool(sctx, "<名>", defineTool({...}))`。
+- 热生效：`store.set()`（设置页保存的唯一入口）末尾调用 `syncToolRegistrations()`，
+  开→注册 / 关→注销，**无需重启**。
+- 读取异常一律按「开启」处理（fail-open），与 `search_switch` 的 `disabledTools` 口径一致。
+- `web_fetch` **不接入本层**：它是官方工具名、仍在静态前台目录里，继续由
+  `search_switch` 的 assembly + guard 管。
+
+### 变更
+
+- `package.json` 的 `files` 增补 `lib/tool_gate.js`（漏列＝发布即缺模块）。
+- 版本号 `0.9.4` → `0.9.5`（`package.json` / `lib/index.js` / `lib/client.js` 三处同步）。
+- README 新增「9. 工具开关下沉到注册层」；`lib/search_switch.js` 头部补记该层与
+  `when` 为何无效。
+- `scripts/check-consistency.mjs` 新增 ⑤b~⑤h 七项断言，钉住「每个工具各经
+  `registerGatedTool` 注册一次」「裸 `sctx.tools.register(` 只剩 `web_fetch` 兜底」
+  「`web_fetch` 未接入本层」「读取器以函数注入」「`store.set` 触发对齐」「files 含新文件」
+  「三个导出齐备」。
+
+### 校验
+
+- `npm run check`：**39 PASS / 0 FAIL**（17 个 lib 文件全部 `node --check` 通过）。
+- 门禁单测（假注册表驱动真模块）：关→不注册、开→注册、`sync` 双向切换、
+  disposer 关闭后不被 sync 复活、读取抛异常/非数组 → fail-open，6 组断言全过。
+- 全量扫描：9/9 工具均命中一次 `registerGatedTool(sctx, "<名>"`，无遗漏无重复。
+
+### 已知边界
+
+- 已发过轮的旧局：面板读上一轮真实请求的缓存（tavern 的 `foregroundExtraTools`，
+  插件侧无法清理），需等该局下一轮请求才刷新；新建局 / 重启后立即生效。
+
 ## 2026-10-29（v0.9.4：修复 web_fetch 质量链无超时导致的无限挂起）
 
 ### 修复
